@@ -42,6 +42,7 @@ public:
 
 private:
     void computeB();
+    void computeXTilta(Eigen::MatrixXd &xTileta);
     void compute_dE_div_dF(const Eigen::Matrix3d &F, const Eigen::Matrix3d& U, const Eigen::Matrix3d V, const Eigen::Vector3d &sigma, Eigen::Matrix3d &P);
     void computeMassMatrix();
     void compute_dE_div_dsigma(const Eigen::Vector3d& sigma, Eigen::Vector3d& dE_div_dsigma);

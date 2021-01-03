@@ -15,6 +15,8 @@ public:
     int getNumTets() {return tets.rows();}
     const Eigen::MatrixXd& getX() const {return x;};
     Eigen::MatrixXd& getX() {return x;}
+    const Eigen::MatrixXd& getPreX() const {return x_pre;};
+    Eigen::MatrixXd& getPreX() {return x_pre;}
     const Eigen::MatrixXi& getTets() const {return tets;}
     Eigen::MatrixXi& getTets() {return tets;}
     const Eigen::MatrixXi& getFaces() const {return faces;}

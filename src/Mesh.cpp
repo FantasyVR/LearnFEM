@@ -12,6 +12,8 @@ Mesh::Mesh(std::string filepath)
     else
         std::cout<< "Failed to load MSH file" <<std::endl;
     computeRestVolume();
+    x_rest = x;
+    x_pre = x;
 }
 
 bool Mesh::laodMesh(std::string filepath)
@@ -60,8 +62,6 @@ bool Mesh::laodMesh(std::string filepath)
         x(i,1) = x1;
         x(i,2) = x2;
     }
-    x_rest = x;
-    x_pre = x;
     std::cout<<"Postions: \n"<< x <<std::endl;
     while (!f1.eof() && std::getline(f1,line))
     {
@@ -150,5 +150,8 @@ Mesh::Mesh(std::string filepath, Eigen::Vector3d &translation, Eigen::Vector3d &
         x.row(i) = orentation.toRotationMatrix() * x.row(i).transpose();
         x.row(i) += translation;
     }
+
+    x_rest = x;
+    x_pre = x;
     computeRestVolume();
 }

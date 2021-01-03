@@ -12,10 +12,10 @@ Softbody::Softbody(World* world,Mesh *mesh,double density, double YM, double PR)
     this->density = density;
     this->mu = YM / 2.0 / (1.0 + PR);
     this->lambda = YM * PR / (1.0 + PR) / (1.0 - 2.0 * PR);
-    int numTets = mesh->getNumTets();
-    vels.setZero(numTets * 3);
-    gradient.setZero(numTets * 3);
-    hessian.setZero(numTets*3, numTets*3);
+    int numVerts = mesh->getX().rows();
+    vels.setZero(numVerts * 3);
+    gradient.setZero(numVerts * 3);
+    hessian.setZero(numVerts*3, numVerts*3);
     computeB();
     computeMassMatrix();
 }
@@ -206,7 +206,15 @@ void Softbody::computeStifnessMatrix()
     }
 }
 void Softbody::assambleGlobalMatrix() {
-
+    auto &A = hessian;
+    int numVert = mesh->getX().rows();
+    for(int vert = 0; vert < numVert; vert++)
+    {
+        int start = vert * 3;
+        A(start + 0, start + 0) += mass[vert];
+        A(start + 1, start + 1) += mass[vert];
+        A(start + 2, start + 2) += mass[vert];
+    }
 }
 
 void Softbody::computeDeformationGradient() {
@@ -263,19 +271,28 @@ void Softbody::update() {
     positions.row(3) = Eigen::Vector3d(0,row3[1]-0.5,0);
 
     // Compute xTilda
-
+    Eigen::MatrixXd xTileta;
+    computeXTilta(xTileta);
     computeDeformationGradient();
     computeEnergy();
     computeInternalForce();
-    computeStifnessMatrix();
     // Assamble Global Matrix
-
+    computeStifnessMatrix();
+    assambleGlobalMatrix();
 
     // Solve Linear System
-
-
+    Eigen::VectorXd b = gradient;
+    int numVert = positions.rows();
+    for(int i = 0; i<numVert; i++)
+    {
+        b.segment(i*3,3) += mass[i]  * (positions.row(i) - xTileta.row(i)).transpose();
+    }
+    auto x = hessian.ldlt().solve(-b);
     // update velocity and positions
 
+    int stepsize = 1.0;
+    for(int i = 0; i<numVert;i++)
+        positions.row(i) += stepsize * x.segment(i*3,3).transpose();
 }
 
 void Softbody::compute_dE_div_dsigma(const Eigen::Vector3d &sigma, Eigen::Vector3d &dE_div_dsigma) {
@@ -384,5 +401,19 @@ void Softbody::dF_div_dx_mult(const Eigen::Matrix<double, 9 , colSize>& right,
         result(0, colI) = -result(3, colI) - result(6, colI) - result(9, colI);
         result(1, colI) = -result(4, colI) - result(7, colI) - result(10, colI);
         result(2, colI) = -result(5, colI) - result(8, colI) - result(11, colI);
+    }
+}
+
+void Softbody::computeXTilta(Eigen::MatrixXd &xTileta) {
+    Eigen::MatrixXd& positions = mesh->getX();
+    Eigen::MatrixXd& pre_pos = mesh->getPreX();
+    xTileta.resize(positions.rows(),positions.cols());
+    int numVert = positions.rows();
+    double dt = world->getDt();
+    Eigen::Vector3d gravity = world->getGravity();
+    for(int i =0 ; i<numVert; i++) {
+        Eigen::Vector3d vel = vels.segment(i * 3, 3);
+        xTileta.row(i) = positions.row(i) + dt * vel.transpose() + dt * dt * gravity.transpose();
+        vels.segment(i * 3, 3)  = (positions.row(i) - pre_pos.row(i)).transpose()/dt;
     }
 }

@@ -6,14 +6,16 @@ class World
 private:
     Softbody *softbody;
     double dt;
+    Eigen::Vector3d gravity;
 public:
-    World() = default;
+    World();
     World(Softbody* sb):softbody(sb){}
     ~World(){delete softbody;}
     void addSoftbody(Softbody *sb){softbody = sb;}
     void step();
     void setDt(double timestep);
-    double getDt();
+    const double getDt () const;
+    const Eigen::Vector3d& getGravity() const;
 };
 
 #endif
