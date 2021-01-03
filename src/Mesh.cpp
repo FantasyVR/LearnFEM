@@ -135,3 +135,20 @@ void Mesh::computeRestVolume()
         rest_volume[i] =(double)(1.0/6) *  fabs(D.determinant());
     }
 }
+
+Mesh::Mesh(std::string filepath, Eigen::Vector3d &translation, Eigen::Vector3d &scale, Eigen::Quaterniond &orentation) {
+    bool success = laodMesh(filepath);
+    if (success)
+        std::cout<<"Load MSH file successfully"<<std::endl;
+    else
+        std::cout<< "Failed to load MSH file" <<std::endl;
+    int numVert = x.rows();
+    // Apply scale, rotation, translation
+    for(int i = 0; i < numVert; i++)
+    {
+        x.row(i).cwiseProduct(scale.transpose());
+        x.row(i) = orentation.toRotationMatrix() * x.row(i).transpose();
+        x.row(i) += translation;
+    }
+    computeRestVolume();
+}
