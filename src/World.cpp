@@ -2,7 +2,7 @@
 World::World()
 {
     dt = 0.025;
-    gravity = Eigen::Vector3d(0.0,-9.8,0.0);
+    gravity = Eigen::Vector3d(0.0,0.0,0.0);
 }
 void World::step()
 {

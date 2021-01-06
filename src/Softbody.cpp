@@ -72,7 +72,7 @@ void Softbody::computeEnergy() {
         e *= mesh->getRestVolume()[tet] * dt * dt;
         energy += e;
     }
-    std::cout<<"Sum Energy: "<< energy <<std::endl;
+    //std::cout<<"Sum Energy: "<< energy <<std::endl;
 }
 
 void Softbody::computeInternalForce() {
@@ -93,7 +93,7 @@ void Softbody::computeInternalForce() {
         Eigen::Vector3d f3 = H.col(2); int sf3 = tets(tet,3) * 3; gradient.segment(sf3,3) += f3;
         Eigen::Vector3d f0 = -f1 -f2 -f3; int sf0 = tets(tet,0)* 3; gradient.segment(sf0,3) += f0;
     }
-    std::cout<<"internal force: \n" << gradient <<std::endl;
+    //std::cout<<"internal force: \n" << gradient <<std::endl;
 }
 
 void Softbody::computeStiffnessMatrixByEle(Eigen::Matrix<double, 12, 12> &hessian, const Eigen::Matrix3d &U,
@@ -265,34 +265,64 @@ void Softbody::compute_dE_div_dF(const Eigen::Matrix3d &F, const Eigen::Matrix3d
 }
 
 void Softbody::update() {
-    // Apply external force
+    int maxIte = 1;
     Eigen::MatrixXd &positions = mesh->getX();
-    Eigen::Vector3d row3 = positions.row(3);
-    positions.row(3) = Eigen::Vector3d(0,row3[1]-0.5,0);
-
-    // Compute xTilda
+    Eigen::MatrixXd tmpPos = positions;
+    int numVert = positions.rows();
     Eigen::MatrixXd xTileta;
     computeXTilta(xTileta);
-    computeDeformationGradient();
-    computeEnergy();
-    computeInternalForce();
-    // Assamble Global Matrix
-    computeStifnessMatrix();
-    assambleGlobalMatrix();
-
-    // Solve Linear System
-    Eigen::VectorXd b = gradient;
-    int numVert = positions.rows();
-    for(int i = 0; i<numVert; i++)
+    for(int ite = 0; ite < maxIte; ite++)
     {
-        b.segment(i*3,3) += mass[i]  * (positions.row(i) - xTileta.row(i)).transpose();
-    }
-    auto x = hessian.ldlt().solve(-b);
-    // update velocity and positions
+        // 1. initX  warm start searchdir
+        Eigen::VectorXd searchDir;
+        searchDir.setZero(numVert * 3);
+        int stepsize = 1.0;
+        // 2. step forward
+        for(int i = 0; i < numVert; i++)
+            positions.row(i) += stepsize * searchDir.segment<3>(i * 3).transpose();
+        // 3. computeEnergyVal
+        computeDeformationGradient();
+        computeEnergy();
+        double initEnergy = energy;
+        std::cout<<"init energy: "<< initEnergy;
+        // 4. compute gradient
+        computeInternalForce();
+        // gradient += m * v;
+        for(int i = 0; i < numVert; i++)
+            gradient.segment<3>(i * 3) += mass[i] * (positions.row(i) - xTileta.row(i)).transpose();
+        std::cout<<" ||g||^2 = " << gradient.squaredNorm() <<std::endl;
+        // 5. implicit solve iteration
+        int iterCap = 1000, currentIter = 0;
+        do {
+            computeStifnessMatrix(); // K
+            assambleGlobalMatrix(); // H = K + M
+            searchDir = hessian.ldlt().solve(-gradient); //solve: H * searchdir = -gradient
+            std::cout << "stepLen = " << (stepsize * searchDir).squaredNorm() << std::endl;
+            // TO: Backtrace Line Search
+            // step forward
+            for(int i = 0; i < numVert; i++)
+                positions.row(i) += stepsize * searchDir.segment<3>(i * 3).transpose();
+            // Re-compute Energy and Gradient
+            computeDeformationGradient();
+            computeEnergy();
+            double currentEnergy = energy;
+            std::cout<<"E_cur_smooth: "<< currentEnergy <<std::endl;
 
-    int stepsize = 1.0;
-    for(int i = 0; i<numVert;i++)
-        positions.row(i) += stepsize * x.segment(i*3,3).transpose();
+            // gradient += m * v;
+            computeInternalForce();
+            for(int i = 0; i < numVert; i++)
+                gradient.segment<3>(i * 3) += mass[i] * (positions.row(i) - xTileta.row(i)).transpose();
+            std::cout<<"||gradient||^2 = " << gradient.squaredNorm() << std::endl;
+
+            if(++currentIter > iterCap)
+                break;
+        }while(gradient.squaredNorm() > 0.000016);
+
+        //update positions and velocities
+        for(int i = 0; i < numVert; i++)
+            vels.segment<3>(i * 3) = (positions.row(i) - tmpPos.row(i)).transpose()/world->getDt();
+        tmpPos = positions;
+    }
 }
 
 void Softbody::compute_dE_div_dsigma(const Eigen::Vector3d &sigma, Eigen::Vector3d &dE_div_dsigma) {

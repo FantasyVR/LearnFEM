@@ -39,7 +39,7 @@ public:
     void assambleGlobalMatrix();
 
     const Mesh* getMesh() const{return mesh;}
-
+    Mesh* getMesh() {return mesh;}
 private:
     void computeB();
     void computeXTilta(Eigen::MatrixXd &xTileta);
@@ -54,5 +54,6 @@ private:
     void dF_div_dx_mult(const Eigen::Matrix<double, 9 , colSize>& right,
                         const Eigen::Matrix<double, 3, 3>& A,
                         Eigen::Matrix<double, 12, colSize>& result);
+
 };
 #endif
