@@ -7,6 +7,7 @@ World::World()
 void World::step()
 {
     softbody->update();
+    rigidbody->update();
 }
 void World::setDt(double timestep)
 {
