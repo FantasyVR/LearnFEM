@@ -12,6 +12,7 @@ public:
     World(Softbody* sb):softbody(sb){}
     ~World(){delete softbody;}
     void addSoftbody(Softbody *sb){softbody = sb;}
+    Softbody* getSoftbody(){return softbody;}
     void step();
     void setDt(double timestep);
     const double getDt () const;
