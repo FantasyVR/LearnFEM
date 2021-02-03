@@ -8,13 +8,13 @@
 class World;
 class Rigidbody{
 private:
-    World* world{};
-    Mesh* mesh{};
-    Eigen::Vector3d cos; // center of mass
-    Eigen::Quaterniond orientation;
-    double mass{};
-    Eigen::Vector3d linear_vel, angular_vel;
-    Eigen::Matrix3d local_inertia;
+    World* world;
+    Mesh* mesh;
+    Eigen::Vector3d cos, cos_pre; // center of mass
+    Eigen::Quaterniond orientation, orientation_pre;
+    double mass;
+    Eigen::Vector3d vel_linear, vel_angular;
+    Eigen::Matrix3d inertia_local;
 
     // simulation variables
     int numSubSteps;
@@ -23,12 +23,16 @@ public:
     Rigidbody(){};
     Rigidbody(World* world, Mesh* mesh, double mass,const Eigen::Quaterniond &rotation):world(world),mesh(mesh),mass(mass), orientation(rotation)
     {
-        //TODO: init general position: cos and orientation
+        computeCenterOfMass(mesh, cos);
+        cos_pre = cos;
+        auto &x = mesh->getX();
+        auto box = x.colwise().maxCoeff() - x.colwise().minCoeff();
+        // TODO: local_inertia of triangle mesh rigid body
+        computeInertiaTensorBox(mass,box[0],box[1],box[2]);
 
-        //TODO: init local_inertia
-
-        //TODO: init general velocity: linear_vel and angular_vel
-
+        // init general velocity: linear_vel and angular_vel
+        vel_linear.setZero();
+        vel_angular.setZero();
 
         numSubSteps = 5;
         numIteration = 1;
@@ -39,6 +43,9 @@ public:
     const Mesh* getMesh() const{return mesh;}
     Mesh* getMesh() {return mesh;}
 
+private:
+    void computeCenterOfMass(const Mesh* mesh,Eigen::Vector3d &cos);
+    void computeInertiaTensorBox(const double mass, const double width, const double height, const double depth);
 };
 
 #endif //LEARNFEM_RIGIDBODY_H
