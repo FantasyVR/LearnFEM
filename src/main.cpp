@@ -61,9 +61,9 @@ int main() {
     world->addRigidbody(rigidbody);
 
     // Add Spring System
-    std::vector<double> mass = {1.0,1.0,100.0};
+    std::vector<double> mass = {1.0,1.0,1.0};
     std::vector<unsigned  int> fixvert = {0};
-    SpringSystem *springSystem = new SpringSystem(world,Eigen::Vector3d(3.0,1.0,1.0), Eigen::Vector3d(5.0,1.0,1.0), 3, mass,1000.0, fixvert);
+    SpringSystem *springSystem = new SpringSystem(world,Eigen::Vector3d(3.0,1.0,1.0), Eigen::Vector3d(5.0,1.0,1.0), 3, mass,1000000.0, fixvert);
     world->addSpringsystem(springSystem);
 
     // Plot the mesh

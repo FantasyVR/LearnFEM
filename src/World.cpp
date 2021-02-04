@@ -11,7 +11,7 @@ void World::step()
 //    if(rigidbody)
 //        rigidbody->update();
     if(springsystem)
-        springsystem->update();
+        springsystem->dualUpdate();
 }
 void World::setDt(double timestep)
 {

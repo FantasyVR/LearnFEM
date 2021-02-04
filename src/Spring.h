@@ -25,18 +25,28 @@ struct Mass
 };
 struct Spring
 {
-    Spring(Mass* m1, Mass* m2, double stiffness):m1(m1),m2(m2),k(stiffness){rest_len = (m1->position-m2->position).norm();}
+    Spring(Mass* m1, Mass* m2, double stiffness):m1(m1),m2(m2),k(stiffness)
+    {
+        rest_len = (m1->position-m2->position).norm();
+        lambda = 0.0;
+    }
+    void resetLambda(){lambda = 0.0;}
+    void resetDualGradient(){dualGradient = 0.0;}
     Mass *m1, *m2;
     double k;
     double rest_len;
+
+    // Dual variables
+    double lambda;
+    double dualGradient;
 };
 class SpringSystem
 {
 public:
     SpringSystem(World* w, const Eigen::Vector3d& start, const Eigen::Vector3d& end, int numPoint,const std::vector<double> mass, double stiffness,  const std::vector<unsigned  int> fixList);
     ~SpringSystem();
-    void update();
-
+    void primalUpdate();
+    void dualUpdate();
     void getEdges(Eigen::MatrixXd& P1, Eigen::MatrixXd& p2);
 private:
     World* world;

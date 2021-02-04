@@ -40,7 +40,7 @@ SpringSystem::~SpringSystem()
     masses.clear();
 }
 
-void SpringSystem::update()
+void SpringSystem::primalUpdate()
 {
     //TODO collision detection
 
@@ -95,6 +95,54 @@ void SpringSystem::update()
             double alpha = 0.1; // TODO: we need to backtrace and determine step size: alpha
             m->velocity += - alpha * m->P * d;
             m->position = m->position_pre + h * m->velocity;
+        }
+    }
+}
+void SpringSystem::dualUpdate()
+{
+    //TODO collision detection
+
+    // Semi-Euler Update
+    double h = world->getDt();
+    for(auto &m: masses)
+    {
+        if(m->isFixed)
+            continue;
+        m->velocity += h * world->getGravity();
+        m->velocity_predict = m->velocity;
+        m->position_pre = m->position;
+        m->position += h * m->velocity;
+    }
+
+    for(int ite = 0; ite<50; ite++)
+    {
+        // Initialize Lagrange multipliers: \lambda and dual gradient: h
+        for(auto &s: springs)
+        {
+            s->resetLambda();
+            s->resetDualGradient();
+            // Evaluate constraints and derivatives
+            auto m1 = s->m1;
+            auto m2 = s->m2;
+            auto constraint = (m1->position - m2->position).norm() - s->rest_len;
+            auto dir = (m1->position - m2->position) / (m1->position - m2->position).norm();
+            s->dualGradient = -constraint - 1.0/s->k * s->lambda;
+            double p_ii = 1.0/ (h * h *(1.0/m1->mass+1.0/m2->mass) + 1.0/s->k);
+            // Compute dual update
+            double alpha = 0.1;
+            s->lambda = alpha * p_ii * s->dualGradient;
+
+            // Update state
+            if(!m1->isFixed)
+            {
+                m1->velocity += h * 1.0/m1->mass * dir * s->lambda;
+                m1->position = m1->position_pre + h * m1->velocity;
+            }
+            if(!m2->isFixed)
+            {
+                m2->velocity -= h * 1.0/m2->mass * dir * s->lambda;
+                m2->position = m2->position_pre + h * m2->velocity;
+            }
         }
     }
 }
