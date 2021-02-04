@@ -60,6 +60,8 @@ void SpringSystem::update()
         // Initialize force f, and Jacobian diagonal p;
         for(auto &m: masses)
         {
+            if(m->isFixed)
+                continue;
             m->resetForce();
             m->resetP();
         }
