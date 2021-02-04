@@ -24,7 +24,8 @@ public:
     const Eigen::VectorXd& getRestVolume()const {return rest_volume;}
     Eigen::VectorXd& getRestVolume() {return rest_volume;}
 private:
-    bool laodMesh(std::string filepath);
+    bool loadMsh(const std::string &filepath);
+    bool loadObj(const std::string &filepath);
     void computeRestVolume();
 };
 #endif

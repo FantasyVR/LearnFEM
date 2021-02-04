@@ -6,7 +6,12 @@ World::World()
 }
 void World::step()
 {
-    softbody->update();
+//    if(softbody)
+//        softbody->update();
+//    if(rigidbody)
+//        rigidbody->update();
+    if(springsystem)
+        springsystem->dualUpdate();
 }
 void World::setDt(double timestep)
 {
@@ -19,6 +24,10 @@ const double World::getDt() const {
 
 const Eigen::Vector3d &World::getGravity() const{
     return gravity;
+}
+void World::setGravity(const Eigen::Vector3d &gv)
+{
+    gravity = gv;
 }
 
 
