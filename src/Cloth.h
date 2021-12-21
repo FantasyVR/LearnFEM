@@ -18,7 +18,7 @@ public:
 
     void step(double h, int num_ite);
 
-
+    void chebyshev_step(double h, int num_ite);
 
     void print_x();
 private:
