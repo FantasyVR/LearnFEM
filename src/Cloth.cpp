@@ -19,9 +19,7 @@ void Cloth::init_pos(){
     for(int i = 0; i < N+1; i++)
         for(int j = 0; j < N+1; j++){
             int idx = i * (N+1) + j;
-            x(idx,0) = double(i)/N;
-            x(idx,1) = 0.0;
-            x(idx,2) = double(j)/N;;
+            x.row(idx) << double(i) / N, 0.0, double(j) / N;
         }
     x_pre = x;
     x_rest = x;
@@ -35,20 +33,12 @@ void Cloth::init_tri(){
             int tri_idx = 2 * (i * N + j);
             int pos_idx = i * (N + 1) + j;
             if((i+j) % 2 == 0){
-                faces(tri_idx, 0) = pos_idx;
-                faces(tri_idx, 1) = pos_idx + N + 2;
-                faces(tri_idx, 2) = pos_idx + 1;
-                faces(tri_idx+1, 0) = pos_idx;
-                faces(tri_idx+1, 1) = pos_idx + N + 1;
-                faces(tri_idx+1, 2) = pos_idx + N + 2;
+                faces.row(tri_idx) << pos_idx, pos_idx + N + 2, pos_idx + 1;
+                faces.row(tri_idx + 1) << pos_idx, pos_idx + N + 1, pos_idx + N+2;
             }
             else{
-                faces(tri_idx, 0) = pos_idx;
-                faces(tri_idx, 1) = pos_idx + N + 1;
-                faces(tri_idx, 2) = pos_idx + 1;
-                faces(tri_idx+1, 0) = pos_idx+1;
-                faces(tri_idx+1, 1) = pos_idx + N + 1;
-                faces(tri_idx+1, 2) = pos_idx + N + 2;
+                faces.row(tri_idx) << pos_idx, pos_idx + N + 1, pos_idx + 1;
+                faces.row(tri_idx + 1) << pos_idx+1, pos_idx + N + 1, pos_idx + N + 2;
             }
         }
 }
@@ -59,16 +49,14 @@ void Cloth::init_edge(){
         for(int j =0; j < N; j++){
             int edge_idx = i * N + j;
             int pos_idx = i *(N+1)+j;
-            edges(edge_idx,0) = pos_idx;
-            edges(edge_idx,1) = pos_idx + 1;
+            edges.row(edge_idx) <<  pos_idx, pos_idx+1;
         }
     int start = N * (N+1);
     for(int i = 0; i < N; i++)
         for(int j =0; j < N+1; j++){
             int edge_idx = start +  j * N + i;
             int pos_idx = i *(N+1)+j;
-            edges(edge_idx,0) = pos_idx;
-            edges(edge_idx,1) = pos_idx + N + 1;
+            edges.row(edge_idx) << pos_idx, pos_idx + N + 1;
         }
     start = 2 * N * (N+1);
     for(int i = 0; i < N; i++)
@@ -76,11 +64,9 @@ void Cloth::init_edge(){
             int edge_idx = start + i * N + j;
             int pos_idx = i * (N+1) +j;
             if((i+j) % 2 == 0){
-                edges(edge_idx,0) = pos_idx;
-                edges(edge_idx,1) = pos_idx + N + 2;
+                edges.row(edge_idx) << pos_idx, pos_idx + N + 2;
             }else{
-                edges(edge_idx,0) = pos_idx + 1;
-                edges(edge_idx,1) = pos_idx + N + 1;
+                edges.row(edge_idx) << pos_idx + 1, pos_idx + N + 1;
             }
         }
 }
